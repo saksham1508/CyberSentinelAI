@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSentinel AI - Security Monitoring Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>🛡️ CyberSentinel AI</h1>
+                <p>AI-Powered Cybersecurity Monitoring System</p>
+            </div>
+            <div class="header-status">
+                <div id="systemStatus" class="status-badge">Loading...</div>
+            </div>
+        </header>
+
+        <nav class="navbar">
+            <button class="nav-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="nav-btn" onclick="switchTab('threats')">Threats</button>
+            <button class="nav-btn" onclick="switchTab('incidents')">Incidents</button>
+            <button class="nav-btn" onclick="switchTab('logs')">Logs</button>
+            <button class="nav-btn" onclick="switchTab('config')">Settings</button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>Total Threats</h3>
+                        <p class="stat-number" id="totalThreats">-</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Incidents</h3>
+                        <p class="stat-number" id="activeIncidents">-</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Recent Logs</h3>
+                        <p class="stat-number" id="recentLogs">-</p>
+                    </div>
+                    <div class="stat-card critical">
+                        <h3>High Severity</h3>
+                        <p class="stat-number" id="highSeverity">-</p>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-container">
+                        <h3>Threats by Type</h3>
+                        <div id="threatsByType" class="chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Threats by Severity</h3>
+                        <div id="threatsBySeverity" class="chart"></div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button onclick="runManualScan()" class="btn btn-primary">🔍 Run Manual Scan</button>
+                    <button onclick="refreshDashboard()" class="btn btn-secondary">🔄 Refresh</button>
+                </div>
+            </section>
+
+            <!-- Threats Tab -->
+            <section id="threats" class="tab-content">
+                <div class="section-header">
+                    <h2>Detected Threats</h2>
+                    <div class="controls">
+                        <input type="text" id="threatFilter" placeholder="Filter threats..." onkeyup="filterThreats()">
+                        <select id="severityFilter" onchange="filterThreats()">
+                            <option value="">All Severities</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="threatsList" class="threats-list"></div>
+            </section>
+
+            <!-- Incidents Tab -->
+            <section id="incidents" class="tab-content">
+                <div class="section-header">
+                    <h2>Security Incidents</h2>
+                    <div class="controls">
+                        <select id="incidentStatusFilter" onchange="filterIncidents()">
+                            <option value="">All Statuses</option>
+                            <option value="Open">Open</option>
+                            <option value="Investigating">Investigating</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="incidentsList" class="incidents-list"></div>
+            </section>
+
+            <!-- Logs Tab -->
+            <section id="logs" class="tab-content">
+                <div class="section-header">
+                    <h2>System Logs</h2>
+                    <div class="controls">
+                        <select id="logLevelFilter" onchange="filterLogs()">
+                            <option value="">All Levels</option>
+                            <option value="error">Error</option>
+                            <option value="warn">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="logsList" class="logs-list"></div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="config" class="tab-content">
+                <div class="section-header">
+                    <h2>System Configuration</h2>
+                </div>
+                <div id="configForm" class="config-form"></div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 CyberSentinel AI. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
