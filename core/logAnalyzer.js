@@ -72,30 +72,9 @@ class LogAnalyzer {
     return similarLogs.length > 5; // Arbitrary threshold
   }
 
-  async logThreats(threats) {
-    try {
-      const db = getDb();
-      for (const threat of threats) {
-        await new Promise((resolve, reject) => {
-          db.run(`INSERT INTO threats (type, severity, description, source_ip, protocol, port) VALUES (?, ?, ?, ?, ?, ?)`,
-            [threat.type, threat.severity, threat.description, threat.source_ip, threat.protocol, threat.port],
-            (err) => {
-              if (err) reject(err);
-              else resolve();
-            });
-        });
-      }
-    } catch (error) {
-      throw new Error(`Failed to log threats: ${error.message}`);
-    }
-  }
-
   async run() {
     try {
       const threats = await this.analyzeLogs();
-      if (threats.length > 0) {
-        await this.logThreats(threats);
-      }
       return threats;
     } catch (error) {
       console.error('Log analysis error:', error);

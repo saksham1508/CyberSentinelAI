@@ -101,23 +101,6 @@ class NetworkMonitor {
       const connections = await this.monitorConnections();
       await this.logConnections(connections);
       const threats = this.detectThreats(connections);
-
-      try {
-        const db = getDb();
-        for (const threat of threats) {
-          await new Promise((resolve, reject) => {
-            db.run(`INSERT INTO threats (type, severity, description, source_ip, destination_ip, protocol, port) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-              [threat.type, threat.severity, threat.description, threat.source_ip, threat.destination_ip, threat.protocol, threat.port],
-              (err) => {
-                if (err) reject(err);
-                else resolve();
-              });
-          });
-        }
-      } catch (dbError) {
-        console.error('Failed to log threats:', dbError.message);
-      }
-
       return { connections, threats };
     } catch (error) {
       console.error('Network monitoring error:', error);

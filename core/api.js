@@ -382,9 +382,14 @@ class API {
       const promises = Object.entries(updates).map(([key, value]) => {
         return new Promise((resolve, reject) => {
           const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-          getDatabase().run('INSERT OR REPLACE INTO configs (key, value) VALUES (?, ?)', [key, stringValue], (err) => {
-            if (err) reject(err);
-            else resolve();
+          const db = getDatabase();
+          db.run('INSERT OR REPLACE INTO configs (key, value) VALUES (?, ?)', [key, stringValue], function(err) {
+            if (err) {
+              console.error('Error updating config:', key, err);
+              reject(err);
+            } else {
+              resolve();
+            }
           });
         });
       });
@@ -392,7 +397,8 @@ class API {
       await Promise.all(promises);
       res.json({ message: 'Configuration updated successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update configuration' });
+      console.error('Config update error:', error);
+      res.status(500).json({ error: 'Failed to update configuration', details: error.message });
     }
   }
 

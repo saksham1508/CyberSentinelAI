@@ -180,10 +180,12 @@ function filterThreats() {
 async function loadIncidents() {
     try {
         const response = await fetch(`${API_BASE}/incidents?limit=50`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         incidentData = await response.json();
         displayIncidents(incidentData);
     } catch (error) {
         console.error('Failed to load incidents:', error);
+        incidentData = [];
         displayEmptyState('incidentsList', 'Failed to load incidents');
     }
 }
@@ -231,10 +233,12 @@ function filterIncidents() {
 async function loadLogs() {
     try {
         const response = await fetch(`${API_BASE}/logs?limit=100`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         logsData = await response.json();
         displayLogs(logsData);
     } catch (error) {
         console.error('Failed to load logs:', error);
+        logsData = [];
         displayEmptyState('logsList', 'Failed to load logs');
     }
 }
@@ -281,10 +285,20 @@ function filterLogs() {
 async function loadConfig() {
     try {
         const response = await fetch(`${API_BASE}/config`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const config = await response.json();
         displayConfig(config);
     } catch (error) {
         console.error('Failed to load config:', error);
+        const defaultConfig = {
+            monitoring_interval_minutes: 5,
+            monitoring_enabled: true,
+            alert_on_high_severity: true,
+            alert_on_medium_severity: false,
+            ai_enabled: true,
+            ai_confidence_threshold: 0.7
+        };
+        displayConfig(defaultConfig);
     }
 }
 

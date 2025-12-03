@@ -74,13 +74,15 @@ class ThreatDetector {
 
   async createIncidents(threats) {
     for (const threat of threats) {
-      if (threat.severity === 'High') {
+      if (threat.severity === 'High' && threat.id) {
         const db = getDb();
         await new Promise((resolve, reject) => {
-          db.run(`INSERT INTO incidents (threat_id, status, response) VALUES ((SELECT id FROM threats WHERE description = ?), ?, ?)`,
-            [threat.description, 'Open', 'Automated alert sent'], (err) => {
-              if (err) reject(err);
-              else resolve();
+          db.run(`INSERT INTO incidents (threat_id, status, response) VALUES (?, ?, ?)`,
+            [threat.id, 'Open', 'Automated alert sent'], (err) => {
+              if (err) {
+                console.warn('Failed to create incident for threat:', threat.id, err);
+              }
+              resolve();
             });
         });
       }
@@ -90,12 +92,50 @@ class ThreatDetector {
   async run() {
     try {
       const threats = await this.detectThreats();
-      await this.createIncidents(threats);
-      return threats;
+      await this.persistThreats(threats);
+      const persistedThreats = await this.getPersistedThreats();
+      await this.createIncidents(persistedThreats);
+      return persistedThreats;
     } catch (error) {
       console.error('Threat detection error:', error);
       return [];
     }
+  }
+
+  async persistThreats(threats) {
+    const db = getDb();
+    for (const threat of threats) {
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT INTO threats (type, severity, description, source_ip, destination_ip, protocol, port) 
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [threat.type, threat.severity, threat.description, threat.source_ip || null, threat.destination_ip || null, threat.protocol || null, threat.port || null],
+          (err) => {
+            if (err) {
+              console.warn('Failed to persist threat:', err);
+            }
+            resolve();
+          }
+        );
+      });
+    }
+  }
+
+  async getPersistedThreats() {
+    return new Promise((resolve, reject) => {
+      const db = getDb();
+      db.all(
+        `SELECT * FROM threats WHERE timestamp > datetime('now', '-1 minute') ORDER BY timestamp DESC`,
+        (err, rows) => {
+          if (err) {
+            console.warn('Failed to retrieve persisted threats:', err);
+            resolve([]);
+          } else {
+            resolve(rows || []);
+          }
+        }
+      );
+    });
   }
 }
 

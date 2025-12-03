@@ -142,10 +142,25 @@ describe('API', () => {
   });
 
   describe('GET /api/config', () => {
-    test('should return configuration', async () => {
+    test('should return configuration with defaults when database is empty', async () => {
+      mockDb.all.mockImplementation((query, callback) => {
+        callback(null, null);
+      });
+
+      const response = await request(app)
+        .get('/api/config')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('monitoring_enabled', true);
+      expect(response.body).toHaveProperty('ai_enabled', true);
+      expect(response.body).toHaveProperty('monitoring_interval_minutes', 5);
+    });
+
+    test('should override defaults with database values', async () => {
       const mockConfig = [
-        { key: 'monitoring_enabled', value: 'true' },
-        { key: 'ai_enabled', value: 'true' }
+        { key: 'monitoring_enabled', value: 'false' },
+        { key: 'ai_enabled', value: 'true' },
+        { key: 'monitoring_interval_minutes', value: '10' }
       ];
 
       mockDb.all.mockImplementation((query, callback) => {
@@ -156,10 +171,9 @@ describe('API', () => {
         .get('/api/config')
         .expect(200);
 
-      expect(response.body).toEqual({
-        monitoring_enabled: true,
-        ai_enabled: true
-      });
+      expect(response.body).toHaveProperty('monitoring_enabled', false);
+      expect(response.body).toHaveProperty('ai_enabled', true);
+      expect(response.body).toHaveProperty('monitoring_interval_minutes', 10);
     });
   });
 });
