@@ -17,6 +17,9 @@ async function initializeDashboard() {
         await loadIncidents();
         await loadLogs();
         await loadConfig();
+        await loadAIDefenseData();
+        await loadInfrastructureData();
+        await loadExplainabilityData();
     } catch (error) {
         console.error('Error initializing dashboard:', error);
         showNotification('Failed to initialize dashboard', 'error');
@@ -393,6 +396,9 @@ async function refreshDashboard() {
         await loadThreats();
         await loadIncidents();
         await loadLogs();
+        await loadAIDefenseData();
+        await loadInfrastructureData();
+        await loadExplainabilityData();
     } catch (error) {
         console.error('Error refreshing dashboard:', error);
     }
@@ -411,4 +417,116 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.classList.remove('show');
     }, 3000);
+}
+
+async function loadAIDefenseData() {
+    try {
+        const [behavioralStats, rulesStats] = await Promise.all([
+            fetch(`${API_BASE}/ai/behavioral-analytics/stats`).then(r => r.json()),
+            fetch(`${API_BASE}/ai/security-rules/stats`).then(r => r.json())
+        ]);
+
+        if (behavioralStats) {
+            document.getElementById('avgAnomaly').textContent = behavioralStats.avgScore || '0';
+            document.getElementById('maxAnomaly').textContent = behavioralStats.maxScore || '0';
+            document.getElementById('anomalyCount').textContent = behavioralStats.anomalyCount || '0';
+        }
+
+        if (rulesStats) {
+            const totalRules = rulesStats.length;
+            const totalMatches = rulesStats.reduce((sum, r) => sum + r.matches, 0);
+            document.getElementById('activeRules').textContent = totalRules;
+            document.getElementById('ruleMatches').textContent = totalMatches;
+        }
+    } catch (error) {
+        console.error('Failed to load AI defense data:', error);
+    }
+}
+
+async function loadSecurityRules() {
+    try {
+        const response = await fetch(`${API_BASE}/ai/security-rules`);
+        const rules = await response.json();
+
+        const rulesList = document.getElementById('securityRulesList');
+        rulesList.style.display = rulesList.style.display === 'none' ? 'block' : 'none';
+
+        if (rules && rules.length > 0) {
+            rulesList.innerHTML = rules.map(rule => `
+                <div class="rule-item">
+                    <div class="rule-header">
+                        <h4>${rule.name}</h4>
+                        <span class="rule-badge ${rule.enabled ? 'active' : 'inactive'}">
+                            ${rule.enabled ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <p>Type: ${rule.actionType}</p>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load security rules:', error);
+        showNotification('Error loading security rules', 'error');
+    }
+}
+
+async function loadInfrastructureData() {
+    try {
+        const response = await fetch(`${API_BASE}/ai/infrastructure/status`);
+        const infrastructure = await response.json();
+
+        document.getElementById('totalAssets').textContent = infrastructure.totalAssets || '0';
+        document.getElementById('healthyAssets').textContent = infrastructure.healthyAssets || '0';
+        document.getElementById('atRiskAssets').textContent = infrastructure.atRiskAssets || '0';
+        document.getElementById('activeThreatCount').textContent = infrastructure.activeCriticalThreats || '0';
+
+        if (infrastructure.assets && infrastructure.assets.length > 0) {
+            const assetsList = document.getElementById('assetsList');
+            assetsList.innerHTML = infrastructure.assets.map(asset => `
+                <div class="asset-card ${asset.status === 'healthy' ? 'healthy' : 'at-risk'}">
+                    <div class="asset-name">${asset.name}</div>
+                    <div class="asset-details">
+                        <span>Status: ${asset.status}</span>
+                        <span>Uptime: ${asset.uptime}%</span>
+                        <span>Active Threats: ${asset.threats}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load infrastructure data:', error);
+    }
+}
+
+async function loadExplainabilityData() {
+    try {
+        const [report, predictions] = await Promise.all([
+            fetch(`${API_BASE}/ai/explainability/report`).then(r => r.json()),
+            fetch(`${API_BASE}/ai/explainability/predictions`).then(r => r.json())
+        ]);
+
+        if (report) {
+            document.getElementById('totalPreds').textContent = report.totalPredictions || '0';
+            document.getElementById('avgConfidence').textContent = report.averageConfidence || '0';
+            const biasCount = report.predictionBreakdown?.biasDetected || 0;
+            document.getElementById('biasCount').textContent = biasCount;
+        }
+
+        if (predictions && predictions.length > 0) {
+            const explanationsList = document.getElementById('explanationsList');
+            explanationsList.innerHTML = predictions.slice(0, 10).map(pred => `
+                <div class="explanation-item">
+                    <div class="explanation-header">
+                        <span class="threat-type">${pred.threatType}</span>
+                        <span class="confidence">Confidence: ${(pred.confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    <p class="prediction">${pred.prediction}</p>
+                    ${pred.reasoning ? `<p class="reasoning">Reason: ${pred.reasoning.summary || ''}</p>` : ''}
+                    ${pred.biasRisk?.riskDetected ? `<div class="bias-warning">⚠️ Potential bias detected</div>` : ''}
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load explainability data:', error);
+    }
 }

@@ -36,6 +36,29 @@ class API {
     this.router.get('/analytics/threats-by-type', this.getThreatsByType.bind(this));
     this.router.get('/analytics/threats-by-severity', this.getThreatsBySeverity.bind(this));
     this.router.get('/analytics/threats-timeline', this.getThreatsTimeline.bind(this));
+
+    // AI-Driven Defense endpoints
+    // Behavioral Analytics
+    this.router.get('/ai/behavioral-analytics/stats', this.getBehavioralAnalyticsStats.bind(this));
+    
+    // Incident Response
+    this.router.post('/ai/incident-response/:threatId', this.orchestrateIncidentResponse.bind(this));
+    this.router.get('/ai/incident-response/:incidentId/status', this.getIncidentResponseStatus.bind(this));
+    
+    // Security Rules
+    this.router.get('/ai/security-rules', this.getSecurityRules.bind(this));
+    this.router.post('/ai/security-rules', this.createSecurityRule.bind(this));
+    this.router.put('/ai/security-rules/:ruleId', this.updateSecurityRule.bind(this));
+    this.router.delete('/ai/security-rules/:ruleId', this.deleteSecurityRule.bind(this));
+    this.router.get('/ai/security-rules/stats', this.getSecurityRulesStats.bind(this));
+    
+    // Infrastructure Protection
+    this.router.get('/ai/infrastructure/status', this.getInfrastructureStatus.bind(this));
+    this.router.get('/ai/infrastructure/assets/:assetId/health', this.getAssetHealth.bind(this));
+    
+    // Explainability & Bias Detection
+    this.router.get('/ai/explainability/report', this.getTransparencyReport.bind(this));
+    this.router.get('/ai/explainability/predictions', this.getExplanations.bind(this));
   }
 
   // Threat endpoints
@@ -448,6 +471,156 @@ class API {
       });
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // AI-Driven Defense Endpoints
+
+  async getBehavioralAnalyticsStats(req, res) {
+    try {
+      const stats = this.threatDetector.behavioralAnalytics.getAnomalyStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch behavioral analytics', details: error.message });
+    }
+  }
+
+  async orchestrateIncidentResponse(req, res) {
+    try {
+      const { threatId } = req.params;
+      getDatabase().get('SELECT * FROM threats WHERE id = ?', [threatId], async (err, threat) => {
+        if (err || !threat) {
+          return res.status(404).json({ error: 'Threat not found' });
+        }
+
+        const result = await this.threatDetector.incidentResponseOrchestrator.orchestrateResponse(threat);
+        res.json({ success: !!result, incidentResponse: result });
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to orchestrate incident response', details: error.message });
+    }
+  }
+
+  async getIncidentResponseStatus(req, res) {
+    try {
+      const { incidentId } = req.params;
+      const status = await this.threatDetector.incidentResponseOrchestrator.getResponseStatus(incidentId);
+      if (!status) {
+        return res.status(404).json({ error: 'Incident not found' });
+      }
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch incident response status', details: error.message });
+    }
+  }
+
+  async getSecurityRules(req, res) {
+    try {
+      const rules = this.threatDetector.securityRulesEngine.getRules();
+      res.json(rules);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch security rules', details: error.message });
+    }
+  }
+
+  async createSecurityRule(req, res) {
+    try {
+      const { name, conditionCode, actionType, actionParams } = req.body;
+      if (!name || !conditionCode || !actionType) {
+        return res.status(400).json({ error: 'Missing required fields: name, conditionCode, actionType' });
+      }
+
+      const result = this.threatDetector.securityRulesEngine.createCustomRule(
+        name,
+        conditionCode,
+        actionType,
+        actionParams
+      );
+
+      if (result.success) {
+        res.status(201).json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create security rule', details: error.message });
+    }
+  }
+
+  async updateSecurityRule(req, res) {
+    try {
+      const { ruleId } = req.params;
+      const { enabled, name } = req.body;
+      
+      if (enabled !== undefined) {
+        enabled ? 
+          this.threatDetector.securityRulesEngine.enableRule(ruleId) :
+          this.threatDetector.securityRulesEngine.disableRule(ruleId);
+      }
+      
+      res.json({ message: 'Security rule updated successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update security rule', details: error.message });
+    }
+  }
+
+  async deleteSecurityRule(req, res) {
+    try {
+      const { ruleId } = req.params;
+      this.threatDetector.securityRulesEngine.disableRule(ruleId);
+      res.json({ message: 'Security rule disabled successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete security rule', details: error.message });
+    }
+  }
+
+  async getSecurityRulesStats(req, res) {
+    try {
+      const stats = this.threatDetector.securityRulesEngine.getRuleStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch security rules statistics', details: error.message });
+    }
+  }
+
+  async getInfrastructureStatus(req, res) {
+    try {
+      const status = this.threatDetector.infrastructureProtection.getInfrastructureStatus();
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch infrastructure status', details: error.message });
+    }
+  }
+
+  async getAssetHealth(req, res) {
+    try {
+      const { assetId } = req.params;
+      const health = this.threatDetector.infrastructureProtection.assessAssetHealth(assetId);
+      if (!health) {
+        return res.status(404).json({ error: 'Asset not found' });
+      }
+      res.json(health);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch asset health', details: error.message });
+    }
+  }
+
+  async getTransparencyReport(req, res) {
+    try {
+      const report = this.threatDetector.explainabilityEngine.generateTransparencyReport();
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate transparency report', details: error.message });
+    }
+  }
+
+  async getExplanations(req, res) {
+    try {
+      const limit = req.query.limit || 20;
+      const explanations = this.threatDetector.explainabilityEngine.getExplanations(parseInt(limit));
+      res.json(explanations);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch explanations', details: error.message });
     }
   }
 }

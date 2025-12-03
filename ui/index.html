@@ -22,6 +22,9 @@
             <button class="nav-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
             <button class="nav-btn" onclick="switchTab('threats', this)">Threats</button>
             <button class="nav-btn" onclick="switchTab('incidents', this)">Incidents</button>
+            <button class="nav-btn" onclick="switchTab('ai-defense', this)">🤖 AI Defense</button>
+            <button class="nav-btn" onclick="switchTab('infrastructure', this)">🏗️ Infrastructure</button>
+            <button class="nav-btn" onclick="switchTab('explainability', this)">📊 Explainability</button>
             <button class="nav-btn" onclick="switchTab('logs', this)">Logs</button>
             <button class="nav-btn" onclick="switchTab('config', this)">Settings</button>
         </nav>
@@ -112,6 +115,79 @@
                     </div>
                 </div>
                 <div id="logsList" class="logs-list"></div>
+            </section>
+
+            <!-- AI Defense Tab -->
+            <section id="ai-defense" class="tab-content">
+                <div class="section-header">
+                    <h2>🤖 AI-Driven Defense Features</h2>
+                </div>
+                <div class="ai-defense-grid">
+                    <div class="feature-card">
+                        <h3>Behavioral Analytics</h3>
+                        <div id="behavioralStats" class="stats-box">
+                            <p>Average Anomaly Score: <span id="avgAnomaly">-</span></p>
+                            <p>Max Score: <span id="maxAnomaly">-</span></p>
+                            <p>Anomalies Detected: <span id="anomalyCount">-</span></p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Security Rules Engine</h3>
+                        <div id="rulesStats" class="stats-box">
+                            <p>Active Rules: <span id="activeRules">-</span></p>
+                            <p>Rules Matched: <span id="ruleMatches">-</span></p>
+                        </div>
+                        <button onclick="loadSecurityRules()" class="btn btn-secondary">View Rules</button>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Automated Response</h3>
+                        <div id="responseStats" class="stats-box">
+                            <p>Status: Active</p>
+                            <p>Mode: Automatic</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="securityRulesList" class="rules-list" style="display:none;"></div>
+            </section>
+
+            <!-- Infrastructure Protection Tab -->
+            <section id="infrastructure" class="tab-content">
+                <div class="section-header">
+                    <h2>🏗️ Critical Infrastructure Protection</h2>
+                </div>
+                <div class="infrastructure-grid">
+                    <div class="info-card">
+                        <h3>Infrastructure Status Overview</h3>
+                        <div id="infrastructureStatus" class="status-box">
+                            <p>Total Assets: <span id="totalAssets">-</span></p>
+                            <p>Healthy: <span id="healthyAssets">-</span></p>
+                            <p>At Risk: <span id="atRiskAssets">-</span></p>
+                            <p>Active Threats: <span id="activeThreatCount">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="assetsList" class="assets-list"></div>
+            </section>
+
+            <!-- Explainability & Bias Detection Tab -->
+            <section id="explainability" class="tab-content">
+                <div class="section-header">
+                    <h2>📊 AI Explainability & Bias Detection</h2>
+                </div>
+                <div class="explainability-grid">
+                    <div class="transparency-card">
+                        <h3>Transparency Report</h3>
+                        <div id="transparencyReport" class="report-box">
+                            <p>Total Predictions: <span id="totalPreds">-</span></p>
+                            <p>Average Confidence: <span id="avgConfidence">-</span></p>
+                            <p>Bias Detected: <span id="biasCount">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="predictions-section">
+                    <h3>Recent Prediction Explanations</h3>
+                    <div id="explanationsList" class="explanations-list"></div>
+                </div>
             </section>
 
             <!-- Settings Tab -->
