@@ -338,10 +338,12 @@ class API {
         if (err) {
           return res.status(500).json({ error: 'Failed to fetch config' });
         }
-        const config = {};
-        rows.forEach(row => {
-          config[row.key] = this.parseValue(row.value);
-        });
+        const config = this.getDefaultConfig();
+        if (rows && rows.length > 0) {
+          rows.forEach(row => {
+            config[row.key] = this.parseValue(row.value);
+          });
+        }
         res.json(config);
       });
     } catch (error) {
@@ -349,12 +351,38 @@ class API {
     }
   }
 
+  getDefaultConfig() {
+    return {
+      monitoring_interval_minutes: 5,
+      monitoring_enabled: true,
+      max_suspicious_connections: 10,
+      alert_on_high_severity: true,
+      alert_on_medium_severity: false,
+      ai_enabled: true,
+      ai_confidence_threshold: 0.7,
+      log_level: 'info',
+      log_max_files: 10,
+      log_max_size: '10m',
+      network_monitoring_enabled: true,
+      suspicious_ports: '22,23,3389,5900',
+      log_analysis_enabled: true,
+      keyword_sensitivity: 'medium',
+      email_notifications: false,
+      email_recipient: '',
+      smtp_server: '',
+      smtp_port: 587,
+      max_concurrent_scans: 3,
+      scan_timeout_seconds: 30
+    };
+  }
+
   async updateConfig(req, res) {
     try {
       const updates = req.body;
       const promises = Object.entries(updates).map(([key, value]) => {
         return new Promise((resolve, reject) => {
-          getDatabase().run('INSERT OR REPLACE INTO configs (key, value) VALUES (?, ?)', [key, value], (err) => {
+          const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+          getDatabase().run('INSERT OR REPLACE INTO configs (key, value) VALUES (?, ?)', [key, stringValue], (err) => {
             if (err) reject(err);
             else resolve();
           });

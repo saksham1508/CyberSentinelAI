@@ -9,21 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(refreshDashboard, 30000);
 });
 
-function initializeDashboard() {
-    updateSystemStatus();
-    loadDashboardData();
-    loadThreats();
-    loadIncidents();
-    loadLogs();
-    loadConfig();
+async function initializeDashboard() {
+    try {
+        await updateSystemStatus();
+        await loadDashboardData();
+        await loadThreats();
+        await loadIncidents();
+        await loadLogs();
+        await loadConfig();
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        showNotification('Failed to initialize dashboard', 'error');
+    }
 }
 
-function switchTab(tabName) {
+function switchTab(tabName, clickElement) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
 
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
+    if (clickElement) {
+        clickElement.classList.add('active');
+    } else {
+        document.querySelector(`button[onclick="switchTab('${tabName}')"]`)?.classList.add('active');
+    }
 }
 
 async function updateSystemStatus() {
@@ -43,32 +52,41 @@ async function updateSystemStatus() {
 async function loadDashboardData() {
     try {
         const response = await fetch(`${API_BASE}/status`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
-        const stats = data.stats;
+        const stats = data.stats || {};
 
         document.getElementById('totalThreats').textContent = stats.totalThreats || 0;
         document.getElementById('activeIncidents').textContent = stats.activeIncidents || 0;
         document.getElementById('recentLogs').textContent = stats.recentLogs || 0;
         document.getElementById('highSeverity').textContent = stats.highSeverityThreats || 0;
 
-        loadThreatAnalytics();
+        await loadThreatAnalytics();
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
+        document.getElementById('totalThreats').textContent = '0';
+        document.getElementById('activeIncidents').textContent = '0';
+        document.getElementById('recentLogs').textContent = '0';
+        document.getElementById('highSeverity').textContent = '0';
     }
 }
 
 async function loadThreatAnalytics() {
     try {
         const typeResponse = await fetch(`${API_BASE}/analytics/threats-by-type`);
-        const typeData = await typeResponse.json();
+        const typeData = typeResponse.ok ? await typeResponse.json() : [];
 
         const severityResponse = await fetch(`${API_BASE}/analytics/threats-by-severity`);
-        const severityData = await severityResponse.json();
+        const severityData = severityResponse.ok ? await severityResponse.json() : [];
 
         renderChart('threatsByType', typeData);
         renderChart('threatsBySeverity', severityData);
     } catch (error) {
         console.error('Failed to load threat analytics:', error);
+        renderChart('threatsByType', []);
+        renderChart('threatsBySeverity', []);
     }
 }
 
@@ -103,10 +121,12 @@ function renderChart(elementId, data) {
 async function loadThreats() {
     try {
         const response = await fetch(`${API_BASE}/threats?limit=50`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         threatData = await response.json();
         displayThreats(threatData);
     } catch (error) {
         console.error('Failed to load threats:', error);
+        threatData = [];
         displayEmptyState('threatsList', 'Failed to load threats');
     }
 }
@@ -352,12 +372,16 @@ async function runManualScan() {
     }
 }
 
-function refreshDashboard() {
-    updateSystemStatus();
-    loadDashboardData();
-    loadThreats();
-    loadIncidents();
-    loadLogs();
+async function refreshDashboard() {
+    try {
+        await updateSystemStatus();
+        await loadDashboardData();
+        await loadThreats();
+        await loadIncidents();
+        await loadLogs();
+    } catch (error) {
+        console.error('Error refreshing dashboard:', error);
+    }
 }
 
 function displayEmptyState(elementId, message) {
