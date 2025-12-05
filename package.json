@@ -23,7 +23,18 @@
     "express": "^5.1.0",
     "natural": "^8.1.0",
     "sqlite3": "^5.1.7",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "dotenv": "^16.3.1",
+    "aws-sdk": "^2.1500.0",
+    "@azure/identity": "^3.2.4",
+    "@azure/arm-compute": "^19.0.0",
+    "@azure/arm-storage": "^16.0.0",
+    "@azure/arm-network": "^32.1.0",
+    "@azure/arm-keyvault": "^9.4.0",
+    "@google-cloud/storage": "^6.10.0",
+    "@google-cloud/compute": "^4.3.0",
+    "@google-cloud/kms": "^3.2.0",
+    "twit": "^2.3.0"
   },
   "devDependencies": {
     "jest": "^30.2.0",
